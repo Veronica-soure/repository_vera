@@ -1,0 +1,46 @@
+---
+- name: Installazione e configurazione dell'applicazione su Mac
+  hosts: localhost
+  become: true
+  vars:
+    app_version: "1.0.0"
+    app_install_dir: "/opt/my_app"
+    app_config_file: "/etc/my_app/config.yml"
+
+  tasks:
+    - name: Aggiorna il sistema
+      command: "{{ item }}"
+      with_items:
+        - "brew update"
+        - "brew upgrade"
+
+    - name: Installa le dipendenze
+      command: brew install {{ item }}
+      with_items:
+        - "python"
+        - "ansible"
+
+    - name: Clona il repository dell'applicazione
+      git:
+        repo: "https://github.com/tuo-username/my_app.git"
+        dest: "{{ app_install_dir }}"
+        version: "{{ app_version }}"
+      tags: clone
+
+    - name: Copia il file di configurazione
+      copy:
+        src: "config.yml"
+        dest: "{{ app_config_file }}"
+      tags: config
+
+    - name: Installa le dipendenze dell'applicazione
+      command: "pip install -r requirements.txt"
+      args:
+        chdir: "{{ app_install_dir }}"
+      tags: dependencies
+
+    - name: Esegui l'applicazione
+      command: "python app.py"
+      args:
+        chdir: "{{ app_install_dir }}"
+      tags: run
